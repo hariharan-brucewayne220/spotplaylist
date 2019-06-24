@@ -41,7 +41,7 @@ class HoursCounter extends Component{
     },0)
     return(
       <div style={{...defaultStyle,width:"40%",display:'inline-block'}}>
-        <h2>{Math.round(totalDuration/60)} hours</h2>
+        <h2>{(totalDuration/3600).toFixed(2)} hours</h2>
       </div>
     )
   }
@@ -84,6 +84,8 @@ class App extends Component{
     let parsed = queryString.parse(window.location.search);
     console.log(parsed)
     let accessToken=parsed.access_token
+    if (!accessToken)
+      return;
     fetch('https://api.spotify.com/v1/me', {
       headers: {'Authorization': 'Bearer ' + accessToken}
     }).then(response => response.json())
@@ -96,13 +98,38 @@ class App extends Component{
     fetch('https://api.spotify.com/v1/me/playlists', {
       headers: {'Authorization': 'Bearer ' + accessToken}
     }).then(response => response.json())
-    .then(data => this.setState({
-      playlists: data.items.map(item => {
-        console.log(data.items)
+    .then(playlistData=>{
+      let playlists=playlistData.items
+      console.log(playlistData.items)
+      let trackDataPromises=playlists.map(playlist=>{
+        let responsePromise=fetch(playlist.tracks.href,{
+        headers: {'Authorization': 'Bearer ' + accessToken}
+      })
+      let trackDataPromise=responsePromise
+      .then(response=>response.json())
+      return trackDataPromise
+    })
+    let allTrackDataPromises=Promise.all(trackDataPromises)
+    let playlistPromise=allTrackDataPromises.then(trackDatas=>{
+      trackDatas.forEach((trackData,i)=>{
+        playlists[i].trackDatas=trackData.items.map(item => item.track)
+        .map(trackData => ({
+          name: trackData.name,
+          duration: trackData.duration_ms / 1000
+        }))
+      })
+      return playlists
+    })
+    return playlistPromise
+    })
+    .then(playlists => this.setState({
+      playlists: playlists.map(item => {
+        console.log(item.trackDatas)
         return {
           name: item.name,
-          songs: [],
-          imageurl:item.images[0].url,id:item.id
+          songs: item.trackDatas.slice(0,3),
+          imageurl:item.images[0].url,
+          id:item.id
         }
     })
     }))
@@ -114,9 +141,14 @@ class App extends Component{
   render(){
     let resultingplaylist = this.state.user && 
     this.state.playlists 
-      ? this.state.playlists.filter(playlist => 
-        playlist.name.toLowerCase().includes(
-          this.state.filterString.toLowerCase())) 
+      ? this.state.playlists.filter(playlist => {
+        let matchesPlaylist= playlist.name.toLowerCase().includes(
+          this.state.filterString.toLowerCase())
+          let matchesSong= playlist.songs.find(song=>song.name.toLowerCase().includes(
+            this.state.filterString.toLowerCase()))
+      return matchesPlaylist||matchesSong
+      }
+        ) 
       : []
     
     let headerStyle={...defaultStyle,fontSize:'50px'}
