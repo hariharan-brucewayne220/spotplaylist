@@ -1,6 +1,6 @@
 import React ,{Component} from 'react';
 import './App.css';
-
+import queryString from 'query-string';
 
 let defaultStyle={
   color:'#fff'
@@ -63,7 +63,8 @@ class Playlist extends Component{
   render(){
     return(
       <div style={{...defaultStyle,width:'25%',float:'left'}}>
-        <h3>{this.props.playlist&&this.props.playlist.name}</h3>
+        <img alt='' src={this.props.playlist.imageurl} style={{width:"150px"}}/>
+        <h3>{this.props.playlist.name}</h3>
         <ul>
         {this.props.playlist.songs.map(song=>{
         return <li>{song.name} </li>
@@ -80,40 +81,71 @@ class App extends Component{
     filterString:''
   }
   componentDidMount(){
-    setTimeout(()=>{
-      this.setState({serverData:fakeServerData});
-    },1000
-    );
-         
+    let parsed = queryString.parse(window.location.search);
+    console.log(parsed)
+    let accessToken=parsed.access_token
+    fetch('https://api.spotify.com/v1/me', {
+      headers: {'Authorization': 'Bearer ' + accessToken}
+    }).then(response => response.json())
+    .then(data => this.setState({
+      user: {
+        name: data.display_name
+      }
+    }))
+
+    fetch('https://api.spotify.com/v1/me/playlists', {
+      headers: {'Authorization': 'Bearer ' + accessToken}
+    }).then(response => response.json())
+    .then(data => this.setState({
+      playlists: data.items.map(item => {
+        console.log(data.items)
+        return {
+          name: item.name,
+          songs: [],
+          imageurl:item.images[0].url,id:item.id
+        }
+    })
+    }))
+
+  
 }
 
 
   render(){
-    let resultingplaylist = this.state.serverData.user ? this.state.serverData.user.playlists.filter(playlist =>
-      playlist.name.toLowerCase().includes(
-        this.state.filterString.toLowerCase())
-  ) : []
+    let resultingplaylist = this.state.user && 
+    this.state.playlists 
+      ? this.state.playlists.filter(playlist => 
+        playlist.name.toLowerCase().includes(
+          this.state.filterString.toLowerCase())) 
+      : []
     
-    let headerStyle={...defaultStyle,'font-size':'50px'}
+    let headerStyle={...defaultStyle,fontSize:'50px'}
     
     return(
      <div className="App">
-      {this.state.serverData.user?
+      {this.state.user?
       <div>
-      <h1 style={headerStyle}>{this.state.serverData.user.name}'s</h1>
-      <PlaylistCounter playlists={this.state.serverData.user.playlists}/>
-       <HoursCounter playlists={this.state.serverData.user.playlists}/>
+      <h1 style={headerStyle}>{this.state.user.name}'s</h1>
+     
+      <PlaylistCounter playlists={resultingplaylist}/>
+       <HoursCounter playlists={resultingplaylist}/>
        <Filter onTextchange={text=>{
          this.setState({filterString:text})
        }}/>
        {
          resultingplaylist.map(playlist=>{
-          return <Playlist playlist={playlist}/>
+          return <Playlist key={playlist.id} playlist={playlist}/>
          })
        }
+      
        
        
-       </div>:<h1>Loading...</h1>
+       </div>:<button onClick={() => {
+            window.location = window.location.href.includes('localhost') 
+              ? 'http://localhost:8888/login' 
+              : 'https://better-playlists-backend.herokuapp.com/login' }
+          }
+          style={{padding: '20px', fontSize: '50px', marginTop: '20px'}}>Sign in with Spotify</button>
     
     }
      </div>
