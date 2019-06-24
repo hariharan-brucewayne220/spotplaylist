@@ -1,5 +1,6 @@
 import React ,{Component} from 'react';
 import './App.css';
+import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import queryString from 'query-string';
 
 let defaultStyle={
@@ -23,7 +24,7 @@ let fakeServerData={
 class PlaylistCounter extends Component{
   render(){
     return(
-      <div style={{...defaultStyle,width:"40%",display:'inline-block'}}>
+      <div style={{...defaultStyle,width:"100px",padding:"20px",display:'inline-block',marginRight:"40%"}}>
         <h2>{this.props.playlists&&this.props.playlists.length} playlists</h2>
       </div>
     )
@@ -40,7 +41,7 @@ class HoursCounter extends Component{
       return sum+=eachsong.duration
     },0)
     return(
-      <div style={{...defaultStyle,width:"40%",display:'inline-block'}}>
+      <div style={{...defaultStyle,width:"100px",marginLeft:"40%",display:'inline-block'}}>
         <h2>{(totalDuration/3600).toFixed(2)} hours</h2>
       </div>
     )
@@ -50,9 +51,10 @@ class HoursCounter extends Component{
 class Filter extends Component{
   render(){
     return(
-      <div>
-        <input type="text" onChange={event=>this.props.onTextchange(event.target.value)}/>
-        <h2 >Filter</h2>
+      <div style={{textAlign:"left",marginLeft:"2.5%"}}>
+        <h2 >Search..</h2>
+        <input style={{width:"400px"}} type="text" onChange={event=>this.props.onTextchange(event.target.value)}/>
+        
       </div>
     )
   }
@@ -62,16 +64,35 @@ class Playlist extends Component{
   
   render(){
     return(
-      <div style={{...defaultStyle,width:'25%',float:'left'}}>
-        <img alt='' src={this.props.playlist.imageurl} style={{width:"150px"}}/>
+      
+/* 
+      <div style={{...defaultStyle,width:'25%',float:'left',border:'1px solid black'}}>
+        <img className="img-thumbnail" alt='' src={this.props.playlist.imageurl} style={{width:"150px"}}/>
         <h3>{this.props.playlist.name}</h3>
-        <ul>
+        <ul >
         {this.props.playlist.songs.map(song=>{
-        return <li>{song.name} </li>
+        return (<li >{song.name} </li>)
        })}
         </ul>
        
-      </div>
+      </div>  */
+
+
+      <div className="card" style={{width:"300px",height:"550px",margin:"50px",float:"left"}}>
+  <img className="card-img-top" src={this.props.playlist.imageurl} alt=""/>
+  <div className="card-body">
+    <h4 className="card-title">{this.props.playlist.name}</h4>
+    <ul className="card-text">
+    {this.props.playlist.songs.map(song=>{
+        return (<li >{song.name} </li>)
+       })}</ul>
+    <a href="#" className="btn btn-success">Play </a>
+  </div>
+</div>
+
+
+
+ 
     )
   }
 }
@@ -151,10 +172,11 @@ class App extends Component{
         ) 
       : []
     
-    let headerStyle={...defaultStyle,fontSize:'50px'}
+    let headerStyle={...defaultStyle,fontSize:'50px',margin:"10px"}
     
     return(
      <div className="App">
+      
       {this.state.user?
       <div>
       <h1 style={headerStyle}>{this.state.user.name}'s</h1>
@@ -172,7 +194,7 @@ class App extends Component{
       
        
        
-       </div>:<button onClick={() => {
+       </div>:<button className="btn btn-success" onClick={() => {
             window.location = window.location.href.includes('localhost') 
               ? 'http://localhost:8888/login' 
               : 'https://better-playlists-backend.herokuapp.com/login' }

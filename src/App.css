@@ -1,10 +1,18 @@
+.card-title{
+  color:black;
+  font-weight: 1000;
+}
 html,body{
-  background-color:grey;
-  color:white
+  background:black;
+  color:white;
 }
 .App {
   text-align: center;
   color:#fff;
+}
+ul{
+  color:black;
+  font-weight: 700;
 }
 
 .App-logo {
